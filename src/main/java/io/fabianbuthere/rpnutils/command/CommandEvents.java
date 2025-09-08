@@ -314,11 +314,17 @@ public class CommandEvents {
                                     CompoundTag tag = item.getOrCreateTag();
                                     CompoundTag displayTag = tag.contains("display", 10) ? tag.getCompound("display").copy() : new CompoundTag();
                                     ListTag lore = new ListTag();
-                                    lore.add(StringTag.valueOf("{\"text\":\"[%s]\"}".formatted(StringArgumentType.getString(context, "serial"))));
+
+                                    String serialInput = StringArgumentType.getString(context, "serial");
+                                    Component loreComponent = Component.literal("[%s]".formatted(serialInput));
+                                    String loreJson = Component.Serializer.toJson(loreComponent);
+
+                                    lore.add(StringTag.valueOf(loreJson));
                                     displayTag.put("Lore", lore);
                                     tag.put("display", displayTag);
                                     item.setTag(tag);
-                                    context.getSource().getPlayerOrException().setItemInHand(InteractionHand.MAIN_HAND, item);
+
+                                    player.setItemInHand(InteractionHand.MAIN_HAND, item);
                                     return 1;
                                 })
                         )

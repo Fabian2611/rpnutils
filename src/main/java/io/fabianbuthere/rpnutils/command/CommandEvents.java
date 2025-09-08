@@ -152,7 +152,7 @@ public class CommandEvents {
         ItemStack signed = new ItemStack(Items.WRITTEN_BOOK);
 
         CompoundTag newTag = new CompoundTag();
-        newTag.putString("title", name);
+        newTag.putString("title", "[%s] %s".formatted(stamp, name));
         newTag.putString("author", authority);
 
         CompoundTag displayTag = new CompoundTag();
@@ -294,6 +294,33 @@ public class CommandEvents {
                                                 )
                                         )
                                 )
+                        )
+        );
+
+        dispatcher.register(
+                Commands.literal("serial")
+                        .then(Commands.argument("serial", StringArgumentType.greedyString())
+                                .executes(context -> {
+                                    ServerPlayer player = context.getSource().getPlayerOrException();
+                                    if (!player.getTags().contains("rpn.use_serial")) {
+                                        context.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Du hast keine Berechtigung um Seriennummern zu vergeben."));
+                                        return 0;
+                                    }
+                                    ItemStack item = player.getMainHandItem();
+                                    if (item.isEmpty() || item.getItem().equals(Items.AIR)) {
+                                        context.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Du musst ein Item in der Hand halten um ihm eine Seriennummer zu geben."));
+                                        return 0;
+                                    }
+                                    CompoundTag tag = item.getOrCreateTag();
+                                    CompoundTag displayTag = tag.contains("display", 10) ? tag.getCompound("display").copy() : new CompoundTag();
+                                    ListTag lore = new ListTag();
+                                    lore.add(StringTag.valueOf("{\"text\":\"[%s]\"}".formatted(StringArgumentType.getString(context, "serial"))));
+                                    displayTag.put("Lore", lore);
+                                    tag.put("display", displayTag);
+                                    item.setTag(tag);
+                                    context.getSource().getPlayerOrException().setItemInHand(InteractionHand.MAIN_HAND, item);
+                                    return 1;
+                                })
                         )
         );
     }

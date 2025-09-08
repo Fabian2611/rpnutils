@@ -244,6 +244,23 @@ public class CommandEvents {
         );
 
         dispatcher.register(
+                Commands.literal("sign_isa")
+                        .then(Commands.argument("stamp", StringArgumentType.string())
+                                .then(Commands.argument("name", StringArgumentType.greedyString())
+                                        .executes(context -> signDocument(
+                                                    context.getSource().getPlayerOrException(),
+                                                    StringArgumentType.getString(context, "stamp"),
+                                                    StringArgumentType.getString(context, "name"),
+                                                    "rpn.isa",
+                                                    "Infinity State Agency",
+                                                    "ISA"
+                                            )
+                                        )
+                                )
+                        )
+        );
+
+        dispatcher.register(
                 Commands.literal("sign_police")
                         .then(Commands.argument("stamp", StringArgumentType.string())
                                 .then(Commands.argument("name", StringArgumentType.greedyString())

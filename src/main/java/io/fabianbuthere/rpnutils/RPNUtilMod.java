@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 public class RPNUtilMod
 {
     public static final String MOD_ID = "rpnutils";
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
     @SuppressWarnings("removal")
     public RPNUtilMod()
@@ -29,7 +29,7 @@ public class RPNUtilMod
     }
 
     public void clientSetup(final FMLClientSetupEvent event) {
-         LOGGER.warn("Server-side mod 'RPNUtils' is present on client.");
+         LOGGER.error("Server-side mod 'RPNUtils' is present on client. Expect crashes and other issues.");
     }
 
     @SubscribeEvent

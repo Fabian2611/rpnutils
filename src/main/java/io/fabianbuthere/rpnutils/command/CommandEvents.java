@@ -3,6 +3,7 @@ package io.fabianbuthere.rpnutils.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import io.fabianbuthere.rpnutils.RPNUtilMod;
+import io.fabianbuthere.rpnutils.util.CutsceneHandler;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +12,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -315,6 +317,24 @@ public class CommandEvents {
         );
 
         dispatcher.register(
+                Commands.literal("sign_zwr")
+                        .then(Commands.argument("stamp", StringArgumentType.string())
+                                .then(Commands.argument("name", StringArgumentType.greedyString())
+                                        .executes(context ->
+                                                signDocument(
+                                                        context.getSource().getPlayerOrException(),
+                                                        StringArgumentType.getString(context, "stamp"),
+                                                        StringArgumentType.getString(context, "name"),
+                                                        "rpn.zwr",
+                                                        "Zentraler Wirtschaftsrat",
+                                                        "ZWR"
+                                                )
+                                        )
+                                )
+                        )
+        );
+
+        dispatcher.register(
                 Commands.literal("serial")
                         .then(Commands.argument("serial", StringArgumentType.greedyString())
                                 .executes(context -> {
@@ -345,6 +365,116 @@ public class CommandEvents {
                                     return 1;
                                 })
                         )
+        );
+
+        // New commands from KubeJS migration
+        dispatcher.register(
+                Commands.literal("rpndbg")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("forceperso")
+                                .executes(context -> {
+                                    ServerPlayer player = context.getSource().getPlayerOrException();
+                                    context.getSource().getServer().getCommands().performPrefixedCommand(context.getSource(), "tag " + player.getScoreboardName() + " remove rpn.perso");
+                                    context.getSource().getServer().getCommands().performPrefixedCommand(context.getSource(), "perso " + player.getScoreboardName());
+                                    return 1;
+                                })
+                        )
+                        .then(Commands.literal("unperso")
+                                .executes(context -> {
+                                    ServerPlayer player = context.getSource().getPlayerOrException();
+                                    context.getSource().getServer().getCommands().performPrefixedCommand(context.getSource(), "tag " + player.getScoreboardName() + " remove rpn.perso");
+                                    return 1;
+                                })
+                                .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                                        .executes(context -> {
+                                            ServerPlayer player = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
+                                            context.getSource().getServer().getCommands().performPrefixedCommand(context.getSource(), "tag " + player.getScoreboardName() + " remove rpn.perso");
+                                            return 1;
+                                        })
+                                )
+                        )
+        );
+
+        dispatcher.register(
+                Commands.literal("isa_tell")
+                        .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                                .then(Commands.argument("message", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            ServerPlayer sourcePlayer = context.getSource().getPlayerOrException();
+                                            if (!sourcePlayer.getTags().contains("rpn.isa")) {
+                                                sourcePlayer.sendSystemMessage(Component.literal("You do not have permission to use this command."));
+                                                return 0;
+                                            }
+                                            ServerPlayer targetPlayer = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
+                                            String message = StringArgumentType.getString(context, "message");
+                                            
+                                            String tellrawJson = String.format("[{\"text\":\"<ISA Agent> \",\"color\":\"red\"},{\"text\":\"%s\", \"color\":\"white\"}]", message);
+                                            
+                                            context.getSource().getServer().getCommands().performPrefixedCommand(context.getSource().withSuppressedOutput().withPermission(4), 
+                                                    "tellraw " + targetPlayer.getScoreboardName() + " " + tellrawJson);
+                                            
+                                            context.getSource().getServer().getCommands().performPrefixedCommand(context.getSource().withSuppressedOutput().withPermission(4), 
+                                                    "tellraw @a[tag=rpn.isa,name=!" + targetPlayer.getScoreboardName() + "] " + tellrawJson);
+                                            return 1;
+                                        })
+                                )
+                        )
+        );
+
+        dispatcher.register(
+                Commands.literal("perso")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                                .executes(context -> {
+                                    ServerPlayer player = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
+                                    io.fabianbuthere.rpnutils.util.PersonalausweisHandler.startPersonalausweisCreation(player);
+                                    return 1;
+                                })
+                        )
+        );
+
+        dispatcher.register(
+                Commands.literal("rathaus")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("ring")
+                                .executes(context -> {
+                                    for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
+                                        context.getSource().getServer().getCommands().performPrefixedCommand(context.getSource().withSuppressedOutput().withPermission(4), 
+                                                "playsound minecraft:entity.experience_orb.pickup master " + player.getScoreboardName() + "[tag=rpn.ring] ~ ~ ~ 1 1");
+                                        context.getSource().getServer().getCommands().performPrefixedCommand(context.getSource().withSuppressedOutput().withPermission(4), 
+                                                "tellraw " + player.getScoreboardName() + "[tag=rpn.ring] {\"text\":\"Im Rathaus wurde geklingelt!\",\"color\":\"green\",\"bold\":true,\"hoverEvent\":{\"action\":\"show_text\",\"value\":[{\"text\":\"" + context.getSource().getTextName() + "\"}]}}");
+                                    }
+                                    return 1;
+                                })
+                        )
+        );
+
+        dispatcher.register(
+                Commands.literal("cutscene")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("index", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                                .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                                        .executes(context -> {
+                                            int index = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "index");
+                                            ServerPlayer player = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
+                                            
+                                            if (index < 0 || index >= CutsceneHandler.getGoalsCount()) {
+                                                player.sendSystemMessage(Component.literal("Invalid cutscene index, stopping quests."));
+                                            }
+                                            
+                                            CutsceneHandler.startCutscene(player, index);
+                                            return 1;
+                                        })
+                                )
+                        )
+        );
+
+        dispatcher.register(
+                Commands.literal("discord")
+                        .executes(context -> {
+                            context.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Hier ist der Link zum Discord: https://discord.gg/invite/JRQdV5BPjY").withStyle(net.minecraft.ChatFormatting.GREEN));
+                            return 1;
+                        })
         );
     }
 }

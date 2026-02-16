@@ -12,7 +12,6 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -475,6 +474,94 @@ public class CommandEvents {
                             context.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Hier ist der Link zum Discord: https://discord.gg/invite/JRQdV5BPjY").withStyle(net.minecraft.ChatFormatting.GREEN));
                             return 1;
                         })
+        );
+
+        dispatcher.register(
+                Commands.literal("change_perso")
+                        .requires(source -> source.isPlayer() &&
+                                source.getPlayer().getTags().contains("rpn.modify_perso") &&
+                                source.getPlayer().getInventory().getSelected().getItem() == Items.WRITTEN_BOOK
+                        )
+                        .then(Commands.literal("waffenschein")
+                                .executes(ctx -> {
+                                    var pages = ctx.getSource().getPlayerOrException().getInventory().getSelected().getOrCreateTag().get("pages");
+                                    if (pages == null) {
+                                        ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand ist kein Buch!"));
+                                        return 0;
+                                    }
+                                    if (pages instanceof ListTag listTag) {
+                                        listTag.set(0, StringTag.valueOf(listTag.getString(0).replace("Waffenschein: ✖", "Waffenschein: ✔")));
+                                        return 1;
+                                    } else {
+                                        ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand hat kein gültiges Format!"));
+                                        return 0;
+                                    }
+                                })
+                        )
+                        .then(Commands.literal("flugschein")
+                        .executes(ctx -> {
+                            var pages = ctx.getSource().getPlayerOrException().getInventory().getSelected().getOrCreateTag().get("pages");
+                            if (pages == null) {
+                                ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand ist kein Buch!"));
+                                return 0;
+                            }
+                            if (pages instanceof ListTag listTag) {
+                                listTag.set(0, StringTag.valueOf(listTag.getString(0).replace("Flugschein: ✖", "Flugschein: ✔")));
+                                return 1;
+                            } else {
+                                ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand hat kein gültiges Format!"));
+                                return 0;
+                            }
+                                })
+                        )
+                        .then(Commands.literal("fuehrerschein")
+                                .executes(ctx -> {
+                                    var pages = ctx.getSource().getPlayerOrException().getInventory().getSelected().getOrCreateTag().get("pages");
+                                    if (pages == null) {
+                                        ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand ist kein Buch!"));
+                                        return 0;
+                                    }
+                                    if (pages instanceof ListTag listTag) {
+                                        listTag.set(0, StringTag.valueOf(listTag.getString(0).replace("Führerschein: ✖", "Führerschein: ✔")));
+                                        return 1;
+                                    } else {
+                                        ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand hat kein gültiges Format!"));
+                                        return 0;
+                                    }
+                                })
+                        )
+                        .then(Commands.literal("anwaltslizenz")
+                                .executes(ctx -> {
+                                    var pages = ctx.getSource().getPlayerOrException().getInventory().getSelected().getOrCreateTag().get("pages");
+                                    if (pages == null) {
+                                        ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand ist kein Buch!"));
+                                        return 0;
+                                    }
+                                    if (pages instanceof ListTag listTag) {
+                                        listTag.set(0, StringTag.valueOf(listTag.getString(0).replace("Anwaltslizenz: ✖", "Anwaltslizenz: ✔")));
+                                        return 1;
+                                    } else {
+                                        ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand hat kein gültiges Format!"));
+                                        return 0;
+                                    }
+                                })
+                        )
+                        .then(Commands.literal("arztlizenz")
+                                .executes(ctx -> {
+                                    var pages = ctx.getSource().getPlayerOrException().getInventory().getSelected().getOrCreateTag().get("pages");
+                                    if (pages == null) {
+                                        ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand ist kein Buch!"));
+                                        return 0;
+                                    }
+                                    if (pages instanceof ListTag listTag) {
+                                        listTag.set(0, StringTag.valueOf(listTag.getString(0).replace("Arztlizenz: ✖", "Arztlizenz: ✔")));
+                                        return 1;
+                                    } else {
+                                        ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Das Item in deiner Hand hat kein gültiges Format!"));
+                                        return 0;
+                                    }
+                                })
+                        )
         );
     }
 }

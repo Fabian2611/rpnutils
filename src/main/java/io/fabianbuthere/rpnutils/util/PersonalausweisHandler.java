@@ -83,8 +83,8 @@ public class PersonalausweisHandler {
                 int day = Integer.parseInt(dateParts[0]);
                 int month = Integer.parseInt(dateParts[1]);
                 int year = Integer.parseInt(dateParts[2]);
-                if (day < 1 || day > 31 || month < 1 || month > 12 || year >= 1870) {
-                    player.sendSystemMessage(Component.literal("Ungültiges Geburtsdatum! Denk daran, dass wir uns im Jahr 1870 befinden."));
+                if (day < 1 || day > 31 || month < 1 || month > 12 || year >= 1863) {
+                    player.sendSystemMessage(Component.literal("Ungültiges Geburtsdatum! Denk daran, dass wir uns im Jahr 1870 befinden. Du solltest außerdem (im RP) über 18 Jahre alt sein."));
                     return true;
                 }
                 playerData.data[3] = input;
@@ -120,13 +120,13 @@ public class PersonalausweisHandler {
                 "Vorname: " + data[1] + "\n" +
                 "Nachname: " + data[2] + "\n" +
                 "Geburtstag: " + data[3] + "\n" +
-                "Hauptwohnsitz: " + data[4] + "\n" +
                 "-------------------\n" +
                 "Lizenzen:\n" +
                 "Waffenschein: ✖\n" +
                 "Flugschein: ✖\n" +
-                "Apothekerlizenz: ✖\n" +
-                "Brauerlizenz: ✖\n";
+                "Führerschein: ✖\n" +
+                "Anwaltslizenz: ✖\n" +
+                "Arztlizenz: ✖\n";
 
         String jsonPage = "{\"text\":\"" + pageContent.replace("\n", "\\n") + "\"}";
         pages.add(StringTag.valueOf(jsonPage));

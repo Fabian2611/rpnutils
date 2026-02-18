@@ -479,8 +479,9 @@ public class CommandEvents {
         dispatcher.register(
                 Commands.literal("change_perso")
                         .requires(source -> source.isPlayer() &&
-                                source.getPlayer().getTags().contains("rpn.modify_perso") &&
-                                source.getPlayer().getInventory().getSelected().getItem() == Items.WRITTEN_BOOK
+                                source.hasPermission(2) ||
+                                (source.getPlayer().getTags().contains("rpn.modify_perso") &&
+                                source.getPlayer().getInventory().getSelected().getItem() == Items.WRITTEN_BOOK)
                         )
                         .then(Commands.literal("waffenschein")
                                 .executes(ctx -> {

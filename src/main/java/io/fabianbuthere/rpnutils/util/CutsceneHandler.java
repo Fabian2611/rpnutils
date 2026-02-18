@@ -44,7 +44,7 @@ public class CutsceneHandler {
                 Collections.singletonList("Sprich jetzt mit Mr. RedBlood, um deinen Personalausweis zu bekommen."),
                 false,
                 player -> player.getServer().getCommands().performPrefixedCommand(player.createCommandSourceStack().withSuppressedOutput().withPermission(4), "doc tutorial"),
-                PersonalausweisHandler::startPersonalausweisCreation
+                _sp -> {}
         ));
 
         // Goal 1

@@ -42,6 +42,23 @@ public class CommandEvents {
         return book;
     }
 
+    private static ItemStack kvgBook() {
+        final ItemStack book = new ItemStack(Items.WRITABLE_BOOK);
+        CompoundTag tag = book.getOrCreateTag();
+        CompoundTag displayTag = new CompoundTag();
+        displayTag.putString("Name", "{\"text\":\"[KVG] - Vorlage\"}");
+        tag.put("display", displayTag);
+
+        ListTag pages = new ListTag();
+
+        pages.add(StringTag.valueOf("-------------------\nErwerbsurkunde\n-------------------\n\nAdresse:\nMusterst. 1\n\nKäufer:\nMustermann, Max\n\nFläche (m²):\n100m²"));
+        pages.add(StringTag.valueOf("-------------------\nErwerbsurkunde\n-------------------\n\nPreis:\n1000.00$\n\nUnterschrift Käufer:\n"));
+
+        tag.put("pages", pages);
+
+        return book;
+    }
+
     private static ItemStack horseBook() {
         final ItemStack book = new ItemStack(Items.WRITABLE_BOOK);
         CompoundTag tag = book.getOrCreateTag();
@@ -221,6 +238,12 @@ public class CommandEvents {
                         .then(Commands.literal("steuer_firma")
                                 .executes(context -> {
                                     context.getSource().getPlayerOrException().addItem(companyTaxBook());
+                                    return 1;
+                                })
+                        )
+                        .then(Commands.literal("kvg")
+                                .executes(context -> {
+                                    context.getSource().getPlayerOrException().addItem(kvgBook());
                                     return 1;
                                 })
                         )

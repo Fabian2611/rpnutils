@@ -163,7 +163,8 @@ public class ServerEventHandling {
         }
     }
 
+    @SuppressWarnings("removal")
     private static ResourceLocation resourceLocation(final String namespace, final String path) {
-        return ResourceLocation.fromNamespaceAndPath(namespace, path);
+        return ResourceLocation.of(namespace + ":" + path, ':');
     }
 }

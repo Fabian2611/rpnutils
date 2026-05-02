@@ -172,9 +172,10 @@ public class PersonalausweisHandler {
         }
     }
 
+    @SuppressWarnings("removal")
     private static void giveItem(ServerPlayer player, String namespace, String itemId, int count) {
         try {
-            Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath(namespace, itemId));
+            Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.of(namespace + ":" + itemId, ':'));
             if (item != null) {
                 player.addItem(new ItemStack(item, count));
             }

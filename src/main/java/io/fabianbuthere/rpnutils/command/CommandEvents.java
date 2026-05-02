@@ -1,9 +1,15 @@
 package io.fabianbuthere.rpnutils.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import io.fabianbuthere.rpnutils.RPNUtilMod;
+import io.fabianbuthere.rpnutils.data.PaymentSavedData;
 import io.fabianbuthere.rpnutils.util.CutsceneHandler;
+import io.github.lightman314.lightmanscurrency.common.data.CustomSaveData;
+import io.github.lightman314.lightmanscurrency.common.data.types.TeamDataCache;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
@@ -585,6 +591,73 @@ public class CommandEvents {
                                         return 0;
                                     }
                                 })
+                        )
+        );
+
+        dispatcher.register(
+                Commands.literal("payment")
+                        .requires(CommandSourceStack::isPlayer)
+                        .then(
+                                Commands.literal("add")
+                                            .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                                                    .then(Commands.argument("days", IntegerArgumentType.integer(0))
+                                                            .then(Commands.argument("account", StringArgumentType.greedyString())
+                                                                    .suggests((ctx, builder) -> {
+                                                                        CustomSaveData.getData(TeamDataCache.TYPE).getAllTeams().forEach(team -> {
+                                                                            if (team.hasBankAccount()) {
+                                                                                builder.suggest(team.getName());
+                                                                            }
+                                                                        });
+                                                                        return builder.buildFuture();
+                                                                    })
+                                                                    .executes(ctx -> {
+                                                                        var data = PaymentSavedData.get(ctx.getSource().getLevel());
+                                                                        var player = ctx.getSource().getPlayerOrException();
+
+                                                                        var acc = ctx.getArgument("account", String.class);
+                                                                        if (CustomSaveData.getData(TeamDataCache.TYPE).getAllTeams().stream().noneMatch(t -> t.getName().equalsIgnoreCase(acc))) {
+                                                                            ctx.getSource().getPlayerOrException().sendSystemMessage(Component.literal("Empfänger ungültig!").withStyle(ChatFormatting.RED));
+                                                                            return 0;
+                                                                        }
+
+                                                                        data.addPayment(player.getUUID(), new PaymentSavedData.PaymentData(
+                                                                                ctx.getArgument("amount", Integer.class) * 100,
+                                                                                ctx.getArgument("days", Integer.class),
+                                                                                System.currentTimeMillis(),
+                                                                                0,
+                                                                                ctx.getArgument("account", String.class)
+                                                                        ));
+
+                                                                        player.sendSystemMessage(Component.literal("Zahlung hinzugefügt!").withStyle(ChatFormatting.GREEN));
+                                                                        return 1;
+                                                                    })
+                                                            )
+                                                    )
+                                            )
+                        )
+                        .then(
+                                Commands.literal("remove")
+                                        .then(Commands.argument("account", StringArgumentType.greedyString())
+                                                .suggests((ctx, builder) -> {
+                                                    PaymentSavedData.get(ctx.getSource().getLevel()).getOrCreatePayments(ctx.getSource().getPlayerOrException().getUUID()).forEach(payment -> {
+                                                        builder.suggest(payment.receiver());
+                                                    });
+                                                    return builder.buildFuture();
+                                                })
+                                                .executes(ctx -> {
+                                                    var data = PaymentSavedData.get(ctx.getSource().getLevel());
+                                                    var player = ctx.getSource().getPlayerOrException();
+                                                    String account = ctx.getArgument("account", String.class);
+
+                                                    if (data.removePayment(player.getUUID(), account)) {
+                                                        player.sendSystemMessage(Component.literal("Zahlung an " + account + " entfernt."));
+                                                        return 1;
+                                                    } else {
+                                                        player.sendSystemMessage(Component.literal("An diesen Empfänger gibt es keine Zahlung.").withStyle(ChatFormatting.RED));
+                                                        return 0;
+                                                    }
+                                                })
+                                        )
                         )
         );
     }

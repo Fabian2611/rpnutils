@@ -1,25 +1,37 @@
 package io.fabianbuthere.rpnutils.event;
 
 import io.fabianbuthere.rpnutils.RPNUtilMod;
+import io.fabianbuthere.rpnutils.config.RPNUtilsConfig;
 import io.fabianbuthere.rpnutils.util.CutsceneHandler;
 import io.fabianbuthere.rpnutils.util.PersonalausweisHandler;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -79,7 +91,6 @@ public class ServerEventHandling {
             resourceLocation("dye_depot", "mint_shulker_box"),
             resourceLocation("dye_depot", "navy_shulker_box"),
             resourceLocation("dye_depot", "slate_shulker_box"),
-            resourceLocation("minecraft", "bamboo_planks"),
             resourceLocation("dye_depot", "indigo_shulker_box")
     );
 
@@ -103,6 +114,8 @@ public class ServerEventHandling {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
         RecipeManager recipeManager = event.getServer().getRecipeManager();
+
+        updateBannedItems();
 
         RPNUtilMod.LOGGER.info("Removing conflicting recipes...");
 
@@ -161,6 +174,88 @@ public class ServerEventHandling {
                     recipeManager.getRecipes()
             ));
         }
+    }
+
+    private static final Set<Item> BANNED_ITEMS_SET = new HashSet<>();
+
+    public static void updateBannedItems() {
+        BANNED_ITEMS_SET.clear();
+        RPNUtilMod.LOGGER.debug("Updating banned items.");
+        for (String id : RPNUtilsConfig.BANNED_ITEMS.get()) {
+            Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(id));
+            if (item == null) {
+                RPNUtilMod.LOGGER.warn("Failed to find to-be-banned item: {}", id);
+            } else {
+                BANNED_ITEMS_SET.add(item);
+                RPNUtilMod.LOGGER.debug("Banned item: {}", id);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onConfigLoad(ModConfigEvent.Loading event) {
+        RPNUtilMod.LOGGER.info("Loading config: Updating banned items.");
+        updateBannedItems();
+    }
+
+    @SubscribeEvent
+    public static void onConfigReload(ModConfigEvent.Reloading event) {
+        RPNUtilMod.LOGGER.info("Reloading config: Updating banned items.");
+        updateBannedItems();
+    }
+
+    @SubscribeEvent
+    public static void onItemPickup(EntityItemPickupEvent event) {
+        if (isItemBanned(event.getItem().getItem())) {
+            event.setCanceled(true);
+            event.getItem().kill();
+            event.getEntity().sendSystemMessage(Component.literal("Dieses Item ist verboten!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerContainerOpen(PlayerContainerEvent.Open event) {
+        event.getContainer().slots.forEach((slot) -> {
+            if (isItemBanned(slot.getItem())) {
+                slot.set(ItemStack.EMPTY);
+                slot.setChanged();
+                event.getEntity().sendSystemMessage(Component.literal("Ein verbotenes Item wurde gelöscht!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+            }
+        });
+    }
+
+    @SubscribeEvent
+    public static void onPlayerItemUse(PlayerInteractEvent.RightClickItem event) {
+        if (isItemBanned(event.getItemStack())) {
+            event.setCanceled(true);
+            event.getItemStack().setCount(0);
+            event.getEntity().sendSystemMessage(Component.literal("Dieses Item ist verboten!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onBlockPlace(PlayerInteractEvent.RightClickBlock event) {
+        if (isItemBanned(event.getItemStack())) {
+            event.setCanceled(true);
+            event.getItemStack().setCount(0);
+            event.getEntity().sendSystemMessage(Component.literal("Dieses Item ist verboten!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemCraft(PlayerEvent.ItemCraftedEvent event) {
+        if (isItemBanned(event.getCrafting())) {
+            event.setCanceled(true);
+            event.getEntity().sendSystemMessage(Component.literal("Dieses Item ist verboten!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+        }
+    }
+
+    private static boolean isItemBanned(Item item) {
+        return BANNED_ITEMS_SET.contains(item);
+    }
+
+    private static boolean isItemBanned(ItemStack stack) {
+        return isItemBanned(stack.getItem());
     }
 
     @SuppressWarnings("removal")

@@ -95,6 +95,8 @@ minecraft {
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
         }
 
         server {
@@ -163,7 +165,9 @@ dependencies {
     // runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
 
     runtimeOnly fg.deobf("maven.modrinth:jei:MoE0CHNA")
-    implementation fg.deobf("maven.modrinth:lightmans-currency:VhNCqebD")
+    implementation fg.deobf("maven.modrinth:lightmans-currency:1.20.1-2.2.5.1c") {
+        transitive = true
+    }
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar

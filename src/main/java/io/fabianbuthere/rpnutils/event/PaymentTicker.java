@@ -16,7 +16,7 @@ public class PaymentTicker {
         if (event.side.isServer() && event.phase == TickEvent.Phase.END && event.level.dimension() == Level.OVERWORLD &&
                 event.level instanceof ServerLevel serverLevel && serverLevel.getGameTime() % 1200 == 0
         ) {
-            RPNUtilMod.LOGGER.info("RPNUtils tick");
+            RPNUtilMod.LOGGER.debug("RPNUtils tick");
             PaymentSavedData.get(serverLevel).tick(serverLevel);
         }
     }

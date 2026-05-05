@@ -120,7 +120,7 @@ public class PaymentSavedData extends SavedData {
 
         // DEBUG: Check if data even exists
         int totalPlayers = playerPayments.size();
-        RPNUtilMod.LOGGER.info("[RPN DEBUG] Tick started. Map size: {}", totalPlayers);
+        RPNUtilMod.LOGGER.debug("[RPN DEBUG] Tick started. Map size: {}", totalPlayers);
 
         if (totalPlayers == 0) {
             return;
@@ -131,11 +131,11 @@ public class PaymentSavedData extends SavedData {
         List<UUID> uuids = new ArrayList<>(playerPayments.keySet());
 
         for (UUID playerUuid : uuids) {
-            RPNUtilMod.LOGGER.info("[RPN DEBUG] Processing Player: {}", playerUuid);
+            RPNUtilMod.LOGGER.debug("[RPN DEBUG] Processing Player: {}", playerUuid);
 
             List<PaymentData> payments = playerPayments.get(playerUuid);
             if (payments == null || payments.isEmpty()) {
-                RPNUtilMod.LOGGER.info("[RPN DEBUG] No payments found for player {}", playerUuid);
+                RPNUtilMod.LOGGER.debug("[RPN DEBUG] No payments found for player {}", playerUuid);
                 continue;
             }
 
@@ -143,7 +143,7 @@ public class PaymentSavedData extends SavedData {
             boolean playerChanged = false;
 
             for (PaymentData p : payments) {
-                RPNUtilMod.LOGGER.info("[RPN DEBUG] Checking payment to: {}. Is Due: {}", p.receiver(), p.isDue());
+                RPNUtilMod.LOGGER.debug("[RPN DEBUG] Checking payment to: {}. Is Due: {}", p.receiver(), p.isDue());
 
                 if (p.isDue()) {
                     // 1. Locate Sender
@@ -170,7 +170,7 @@ public class PaymentSavedData extends SavedData {
                     IBankAccount receiverAcc = receiverAccOpt.get();
                     MoneyValue amountToPay = CoinValue.fromNumber("main", p.amount());
 
-                    RPNUtilMod.LOGGER.info("[RPN DEBUG] Attempting payment. Amount: {}. Sender Balance: {}",
+                    RPNUtilMod.LOGGER.debug("[RPN DEBUG] Attempting payment. Amount: {}. Sender Balance: {}",
                             amountToPay.getText().getString(),
                             senderAcc.getMoneyStorage().getStoredMoney().getString());
 
@@ -180,7 +180,7 @@ public class PaymentSavedData extends SavedData {
                         if (withdrawResult.getFirst()) {
                             boolean success = BankAPIImpl.API.BankDepositFromServer(receiverAcc, withdrawResult.getSecond(), false);
                             if (success) {
-                                RPNUtilMod.LOGGER.info("[RPN DEBUG] SUCCESS! Payment processed for {}", playerUuid);
+                                RPNUtilMod.LOGGER.debug("[RPN DEBUG] SUCCESS! Payment processed for {}", playerUuid);
                                 nextTickList.add(new PaymentData(p.amount(), p.days_interval(), p.started_at(), now, p.receiver()));
                                 playerChanged = true;
                                 saveRequired = true;
@@ -207,7 +207,7 @@ public class PaymentSavedData extends SavedData {
         }
 
         if (saveRequired) {
-            RPNUtilMod.LOGGER.info("[RPN DEBUG] Saving changes to disk.");
+            RPNUtilMod.LOGGER.debug("[RPN DEBUG] Saving changes to disk.");
             this.setDirty();
         }
     }
